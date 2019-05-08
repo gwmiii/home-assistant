@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_NAME = 'SSL Certificate Expiry'
 DEFAULT_PORT = 443
 
-SCAN_INTERVAL = timedelta(hours=12)
+DEFAULT_SCAN_INTERVAL = timedelta(hours=12)
 
 TIMEOUT = 10.0
 
@@ -25,6 +25,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_HOST): cv.string,
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
     vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    vol.Optional(CONF_SCAN_INTERVAL,default=DEFAULT_SCAN_INTERVAL):cv.string,
 })
 
 
@@ -38,10 +39,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         server_name = config.get(CONF_HOST)
         server_port = config.get(CONF_PORT)
         sensor_name = config.get(CONF_NAME)
-
+        scan_interval = config.get(CONF_SCAN_INTERVAL)
         add_entities([SSLCertificate(sensor_name, server_name, server_port)],
                      True)
-
+        _LOGGER.error("CERT EXPIRY UPDATE INTERVAL: %s", scan_interval)
     # To allow checking of the HA certificate we must first be running.
     hass.bus.listen_once(EVENT_HOMEASSISTANT_START, run_setup)
 
@@ -49,7 +50,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SSLCertificate(Entity):
     """Implementation of the certificate expiry sensor."""
 
-    def __init__(self, sensor_name, server_name, server_port):
+    def __init__(self, sensor_name, server_name, server_port,):
         """Initialize the sensor."""
         self.server_name = server_name
         self.server_port = server_port
