@@ -9,7 +9,7 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (CONF_NAME, CONF_HOST, CONF_PORT,
-                                 EVENT_HOMEASSISTANT_START)
+                                 EVENT_HOMEASSISTANT_START,CONF_SCAN_INTERVAL)
 from homeassistant.helpers.entity import Entity
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,7 +42,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         scan_interval = config.get(CONF_SCAN_INTERVAL)
         add_entities([SSLCertificate(sensor_name, server_name, server_port)],
                      True)
-        _LOGGER.error("CERT EXPIRY UPDATE INTERVAL: %s", scan_interval)
     # To allow checking of the HA certificate we must first be running.
     hass.bus.listen_once(EVENT_HOMEASSISTANT_START, run_setup)
 
@@ -108,3 +107,4 @@ class SSLCertificate(Entity):
         timestamp = datetime.fromtimestamp(ts_seconds)
         expiry = timestamp - datetime.today()
         self._state = expiry.days
+
