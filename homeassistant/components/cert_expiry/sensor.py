@@ -49,7 +49,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SSLCertificate(Entity):
     """Implementation of the certificate expiry sensor."""
 
-    def __init__(self, sensor_name, server_name, server_port,):
+    def __init__(self, sensor_name, server_name, server_port):
         """Initialize the sensor."""
         self.server_name = server_name
         self.server_port = server_port
