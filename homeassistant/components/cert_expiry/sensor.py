@@ -18,6 +18,8 @@ DEFAULT_NAME = 'SSL Certificate Expiry'
 DEFAULT_PORT = 443
 
 DEFAULT_SCAN_INTERVAL = timedelta(hours=12)
+last_update_time = 0
+
 
 TIMEOUT = 10.0
 
@@ -40,8 +42,9 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         server_port = config.get(CONF_PORT)
         sensor_name = config.get(CONF_NAME)
         scan_interval = config.get(CONF_SCAN_INTERVAL)
-        add_entities([SSLCertificate(sensor_name, server_name, server_port)],
+        add_entities([SSLCertificate(sensor_name, server_name, server_port,scan_interval)],
                      True)
+        _LOGGER.info("CERT EXPIRY UPDATE INTERVAL: %s for %s ", scan_interval,server_name)
     # To allow checking of the HA certificate we must first be running.
     hass.bus.listen_once(EVENT_HOMEASSISTANT_START, run_setup)
 
@@ -49,12 +52,13 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class SSLCertificate(Entity):
     """Implementation of the certificate expiry sensor."""
 
-    def __init__(self, sensor_name, server_name, server_port):
+    def __init__(self, sensor_name, server_name, server_port,scan_interval):
         """Initialize the sensor."""
         self.server_name = server_name
         self.server_port = server_port
         self._name = sensor_name
         self._state = None
+        self.scan_interval = scan_interval
 
     @property
     def name(self):
@@ -75,7 +79,10 @@ class SSLCertificate(Entity):
     def icon(self):
         """Icon to use in the frontend, if any."""
         return 'mdi:certificate'
-
+    @property
+    def last_update():
+        return self.last_update_time
+    
     def update(self):
         """Fetch the certificate information."""
         try:
@@ -86,6 +93,7 @@ class SSLCertificate(Entity):
                 socket.socket(family=family), server_hostname=self.server_name)
             sock.settimeout(TIMEOUT)
             sock.connect((self.server_name, self.server_port))
+            _LOGGER.info("CERT EXPIRY UPDATE running")
         except socket.gaierror:
             _LOGGER.error("Cannot resolve hostname: %s", self.server_name)
             return
@@ -106,5 +114,6 @@ class SSLCertificate(Entity):
         ts_seconds = ssl.cert_time_to_seconds(cert['notAfter'])
         timestamp = datetime.fromtimestamp(ts_seconds)
         expiry = timestamp - datetime.today()
+        last_update_time = datetime.today()
         self._state = expiry.days
 
